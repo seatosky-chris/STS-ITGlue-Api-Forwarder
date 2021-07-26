@@ -1,0 +1,7 @@
+IP,ITGlueOrgID,APIKeyName
+
+127.0.0.1,ITG_ORG_ID,ORG
+1.1.1.1,123456,ORG
+2.2.2.2,123457,ORG
+localtesting,123456,ORG
+localtesting,123457,APIKey_ORG

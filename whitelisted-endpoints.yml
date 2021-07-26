@@ -1,0 +1,982 @@
+attachments:
+  endpoints:
+  - /:type/:id/relationships/attachments
+  - /:type/:id/relationships/attachments/:id
+  methods:
+  - DELETE
+  - PATCH
+  - POST
+  allowed_parameters:
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        id: int
+        attachment:
+          content: base64file
+          file_name: string
+  returnbody:
+    data:
+    - type: string
+      attributes:
+        id: int
+
+related_items:
+  endpoints:
+  - /:type/:id/relationships/related_items
+  - /:type/:id/relationships/related_items/:id
+  methods:
+  - DELETE
+  - PATCH
+  - POST
+  allowed_parameters:
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        id: int
+        destination_id: int
+        destination_type: string
+        notes: string
+        
+password_categories:
+  endpoints:
+  - /password_categories
+  - /password_categories/:id
+  methods:
+  - GET
+  - POST
+  - PATCH
+  allowed_parameters:
+  - filter[name]
+  - sort
+  - page[number]
+  - page[size]
+  createbody:
+    data:
+    - type: string
+      attributes:
+        name: string
+  returnbody:
+    data:
+    - type: string
+      id: int
+      attributes:
+        name: string
+        created-at: datetime
+        updated-at: datetime
+        passwords-count: int
+
+passwords:
+  endpoints:
+  - /passwords
+  - /passwords/:id
+  - /organizations/:id/relationships/passwords
+  - /organizations/:id/relationships/passwords/:id
+  methods: 
+  - GET
+  - POST
+  - PATCH
+  allowed_parameters:
+  - filter[id]
+  - filter[name]
+  - filter[organization_id]
+  - filter[password_category_id]
+  - filter[url]
+  - filter[cached_resource_name]
+  - sort
+  - page[number]
+  - page[size]
+  - include
+  required_parameters:
+  - show_passwords: "false"
+  createbody:
+    data:
+    - type: string
+      attributes:
+        id: int
+        organization-id: int
+        name: string
+        username: string
+        password: string
+        url: string
+        notes: string
+        resource-id: int
+        resource-type: string
+        password-category-id: int 
+  returnbody:
+    data:
+    - type: string
+      id: int
+      attributes:
+        username: string
+        name: string
+        organization-id: int
+        url: string
+        notes: string
+        created-at: datetime
+        updated-at: datetime
+        password-updated-at: datetime
+
+organizations:
+  endpoints:
+  - /organizations
+  - /organizations/:id
+  methods:
+  - GET
+  allowed_parameters:
+  - filter[id]
+  - filter[name]
+  - filter[organization_type_id]
+  - filter[organization_status_id]
+  - filter[created_at]
+  - filter[updated_at]
+  - filter[psa_id]
+  - sort
+  - page[number]
+  - page[size]
+  returnbody:
+    data:
+    - type: string
+      id: int
+      attributes:
+        name: string
+        organization-type-id: int
+        organization-type-name: string
+        organization-status-id: int
+        organization-status-name: string
+        primary: bool
+        logo: string
+        short-name: string
+        updated-at: datetime
+        created-at: datetime
+
+configurations:
+  endpoints:
+  - /configurations
+  - /configurations/:id
+  - /organizations/:id/relationships/configurations
+  - /organizations/:id/relationships/configurations/:id
+  methods:
+  - GET
+  - PATCH
+  - POST
+  allowed_parameters:
+  - filter[id]
+  - filter[name]
+  - filter[organization_id]
+  - filter[configuration_type_id]
+  - filter[configuration_status_id]
+  - filter[contact_id]
+  - filter[serial_number]
+  - filter[asset_tag]
+  - filter[psa_id]
+  - filter[psa_integration_type]
+  - filter[rmm_id]
+  - filter[rmm_integration_type]
+  - filter[archived]
+  - sort
+  - page[number]
+  - page[size]
+  - include
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        id: int
+        organization-id: int
+        name: string
+        hostname: string
+        configuration-type-id: int
+        configuration-status-id: int
+        location_id: int
+        contact-id: int
+        manufacturer-id: int
+        model-id: int
+        operating-system-id: int
+        operating-system-notes: string
+        primary-ip: string
+        default-gateway: string
+        mac-address: string
+        serial-number: string
+        asset-tag: string
+        position: string
+        installed-by: string
+        purchased-by: string
+        purchased-at: string
+        warranty-expires-at: string
+        installed-at: string
+        restricted: bool
+        archived: bool
+        notes: string
+      relationships:
+        configuration-interfaces:
+          data:
+          - id: int
+            type: string
+  returnbody:
+    data:
+    - id: int
+      type: string
+      attributes:
+        organization-id: int
+        name: string
+        hostname: string
+        serial-number: string
+        asset-tag: string
+        notes: string
+        archived: bool
+      relationships:
+        configuration-interfaces:
+          data:
+          - id: int
+            type: string
+          
+domains:
+  endpoints:
+  - /domains
+  - /organizations/:id/relationships/domains
+  methods:
+  - GET
+  allowed_parameters:
+  - filter[id]
+  - filter[organization_id]
+  - sort
+  - page[number]
+  - page[size]
+  - include
+  required_parameters:
+  createbody:
+  returnbody:
+    data:
+    - id: int
+      type: string
+      attributes:
+        organization-id: int
+        organization-name: string
+        resource-url: string
+        name: string
+        screenshot: string
+        registrar-name: string
+        notes: string
+        expires-on: datetime
+        updated-at: datetime
+
+flexible_assets:
+  endpoints:
+  - /flexible_assets
+  - /flexible_assets/:id
+  methods:
+  - GET
+  - PATCH
+  - POST
+  - DELETE
+  allowed_parameters:
+  - id
+  - filter[flexible_asset_type_id]
+  - filter[name]
+  - filter[organization_id]
+  - sort
+  - page[number]
+  - page[size]
+  - include
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        id: int
+        organization-id: int
+        flexible-asset-type-id: int
+        traits:
+          ### Used for "Device logbook - Autodoc"
+          device-name: string
+          events: string
+          user-profiles: string
+          installed-updates: string
+          installed-software: string
+          device: int
+          ### Used for "Unifi - Sites"
+          site-name: string
+          wan: string
+          lan: string
+          vpn: string
+          wi-fi: string
+          port-forwards: string
+          switches: string
+          ### Used for "ITGLue AutoDoc - SQL Server"
+          instance-name: string
+          instance-settings: string
+          databases: string
+          tagged-devices: [int]
+          # Used for "Hyper-v AutoDoc v2"
+          host-name: string
+          host-device: [int]
+          virtual-machines: string
+          network-settings: string
+          replication-settings: string
+          host-settings: string
+          ### Customer Billing
+          billed-by: string
+          number-of-billed-users: int
+          number-of-billed-computers: int
+          billing-report-user-list:
+            content: base64file
+            file_name: string
+          user-breakdown: string
+          notes: string
+          ### Cost Centre
+          cost-centre-id: int
+          cost-centre-name: string
+          associated-location-s: [int]
+          associated-employee-s: [int]
+          ### Active Directory
+          ad-full-name: string
+          ad-short-name: string
+          ad-level: string
+          ad-servers: [int]
+          primary-domain-controller: [int]
+          domain-admin-passwords: [int]
+          dns-servers: [int]
+          dhcp-servers: [int]
+          dhcp-servers-info: string
+          forest-summary: string
+          site-summary: string
+          domain-controllers: string
+          fsmo-roles: string
+          optional-features: string
+          upn-suffixes: string
+          default-password-policies: string
+          domain-admins: string
+          user-count: string
+          ### AD Groups
+          group-name: string
+          group-type: string
+          group-description: string
+          folder-traverse: bool
+          folder-access-type: string
+          who-to-add: string
+          approver-for-access: [int]
+          guid: string
+          group-details: string
+          member-groups: [int]
+          member-users: [int]
+          member-configurations: [int]
+          members-table: string
+          parent-groups: [int]
+          parent-groups-table: string
+          ### File Shares
+          share-name: string
+          share-type: string
+          share-description: string
+          mapped-drive-letter: string
+          share-path: string
+          related-gpo: string
+          servers: [int]
+          disk-path-on-server: string
+          approver-for-access-to-folder: [int]
+          specific-setup-instructions: string
+          ad-groups-full-access: [int]
+          ad-groups-modify: [int]
+          ad-groups-read-only: [int]
+          ad-groups-deny: [int]
+          full-access-permissions: string
+          read-permissions: string
+          modify-permissions: string
+          deny-permissions: string
+          permissions-csv:
+            content: base64file
+            file_name: string
+          ### Licenses
+          name: string
+          version: string
+          target-type: string
+          application: [int]
+          seats: float
+          licensing-method: string
+          license-product-serial-key: string
+          other-keys-codes: string
+          user-login-s: [int]
+          license-files:
+            content: base64file
+            file_name: string
+          purchased-by-location: [int]
+          purchase-date: datetime
+          renewal-date: datetime
+          microsoft-agreement: [int]
+          ticket-number-for-original-purchase: string
+          additional-notes: string
+          assigned-device-s: [int]
+          assigned-user-s: [int]
+          # Custom Overview
+          overview: string
+
+  returnbody:
+    errors: list
+    data:
+    - id: int
+      type: string
+      attributes:
+        organization-id: int
+        resource-url: string
+        flexible-asset-type-id: int
+        name: string
+        traits:
+          device-name: string
+          domain-name: string
+          instance-name: string
+          device: int
+          name: string
+          host-name: string
+          ### Customer Billing
+          billed-by: string
+          number-of-billed-users: int
+          number-of-billed-computers: int
+          billing-report-user-list:
+            content-type: string
+            name: string
+            size: int
+            url: string
+          user-breakdown: string
+          notes: string
+          ### Cost Centre
+          cost-centre-id: int
+          cost-centre-name: string
+          associated-location-s:  
+            type: string
+            values:
+            - resource-url: string
+              id: int
+              name: string
+              address-1: string
+              city: string
+              organization-name: string
+          associated-employee-s:
+            type: string
+            values:
+            - resource-url: string
+              id: int
+              first-name: string
+              last-name: string
+              contact-type-name: string
+              organization-name: string
+          ### Active Directory
+          ad-full-name: string
+          ad-short-name: string
+          ad-level: string
+          ad-servers:
+            type: string
+            values:
+            - id: int
+          primary-domain-controller:
+            type: string
+            values:
+            - id: int
+          domain-admin-passwords:
+            type: string
+            values:
+            - id: int
+          dns-servers:
+            type: string
+            values:
+            - id: int
+          dhcp-servers:
+            type: string
+            values:
+            - id: int
+          dhcp-servers-info: string
+          forest-summary: string
+          site-summary: string
+          domain-controllers: string
+          fsmo-roles: string
+          optional-features: string
+          upn-suffixes: string
+          default-password-policies: string
+          domain-admins: string
+          user-count: string
+          ### AD Groups
+          group-name: string
+          group-type: string
+          group-description: string
+          folder-traverse: bool
+          folder-access-type: string
+          who-to-add: string
+          approver-for-access:
+            type: string
+            values:
+            - id: int
+          guid: string
+          group-details: string
+          member-groups:
+            type: string
+            values:
+            - id: int
+          member-users:
+            type: string
+            values:
+            - id: int
+          member-configurations:
+            type: string
+            values:
+            - id: int
+          members-table: string
+          parent-groups:
+            type: string
+            values:
+            - id: int
+          parent-groups-table: string
+          ### File Shares
+          share-name: string
+          share-type: string
+          share-description: string
+          mapped-drive-letter: string
+          share-path: string
+          related-gpo: string
+          servers:
+            type: string
+            values:
+            - id: int
+          disk-path-on-server: string
+          approver-for-access-to-folder:
+            type: string
+            values:
+            - id: int
+          specific-setup-instructions: string
+          ad-groups-full-access:
+            type: string
+            values:
+            - id: int
+          ad-groups-modify:
+            type: string
+            values:
+            - id: int
+          ad-groups-read-only:
+            type: string
+            values:
+            - id: int
+          ad-groups-deny:
+            type: string
+            values:
+            - id: int
+          full-access-permissions: string
+          read-permissions: string
+          modify-permissions: string
+          deny-permissions: string
+          permissions-csv:
+            content-type: string
+            name: string
+            size: int
+            url: string
+          ### Applications
+          manufacturer: string
+          version: string
+          category: string
+          website: string
+          how-to-access: string
+          ### Licenses
+          target-type: string
+          application:
+            type: string
+            values:
+            - id: int
+          seats: float
+          licensing-method: string
+          license-product-serial-key: string
+          other-keys-codes: string
+          user-login-s:
+            type: string
+            values:
+            - id: int
+          license-files:
+            content-type: string
+            name: string
+            size: int
+            url: string
+          purchased-by-location:
+            type: string
+            values:
+            - id: int
+          purchase-date: datetime
+          renewal-date: datetime
+          microsoft-agreement:
+            type: string
+            values:
+            - id: int
+          ticket-number-for-original-purchase: string
+          additional-notes: string
+          assigned-device-s:
+            type: string
+            values:
+            - id: int
+          assigned-user-s:
+            type: string
+            values:
+            - id: int
+          # Custom Overview
+          overview: string
+          ###
+        created-at: datetime
+        updated-at: datetime
+      relationships:
+        attachments:
+          data:
+          - id: int
+            type: string
+    included:
+    - id: int
+      type: string
+      attributes:
+        id: int
+        name: string
+        attachment-file-name: string
+        attachment-content-type: string
+        attachment-file-size: int
+        ext: string
+        download-url: string
+        created-at: datetime
+        updated-at: datetime
+
+flexible_asset_types:
+  endpoints:
+  - /flexible_asset_types
+  - /flexible_asset_types/:id
+  methods:
+  - GET
+  - POST
+  allowed_parameters:
+  - filter[enabled]
+  - filter[icon]
+  - filter[id]
+  - filter[name]
+  - sort
+  - page[number]
+  - page[size]
+  - include
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        name: string
+        description: string
+        icon: string
+        show-in-menu: bool
+      relationships:
+        flexible-asset-fields:
+          data:
+          - type: string
+            attributes:
+              order: int
+              name: string
+              kind: string
+              hint: string
+              tag-type: string
+              required: bool
+              options: string
+              use-for-title: bool
+              show-in-list: bool
+  returnbody:
+    data:
+    - id: int
+      type: string
+      attributes:
+        name: string
+        description: string
+        created-at: datetime
+        updated-at: datetime
+        icon: string
+        show-in-menu: bool
+      relationships:
+        flexible-asset-fields:
+          data:
+          - id: int
+            type: string
+
+configuration_types:
+  endpoints:
+  - /configuration_types
+  - /configuration_types/:id
+  methods:
+  - GET
+  - POST
+  allowed_parameters:
+  - filter[name]
+  - sort
+  - page[number]
+  - page[size]
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        name: string
+  returnbody:
+    data:
+    - id: int
+      type: string
+      attributes:
+        name: string
+        configurations-count: int
+        created-at: datetime
+        updated-at: datetime
+
+models:
+  endpoints:
+  - /models
+  - /models/:id
+  methods:
+  - GET
+  - POST
+  allowed_parameters:
+  - filter[id]
+  - sort
+  - page[number]
+  - page[size]
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        id: int
+        name: string
+        manufacturer-id: int
+  returnbody:
+    data:
+    - id: int
+      type: string
+      attributes:
+        name: string
+        created-at: datetime
+        updated-at: datetime
+
+manufacturers:
+  endpoints:
+  - /manufacturers
+  - /manufacturers/:id
+  methods:
+  - GET
+  - POST
+  allowed_parameters:
+  - filter[name]
+  - sort
+  - page[number]
+  - page[size]
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        name: string
+  returnbody:
+    data:
+    - id: int
+      type: string
+      attributes:
+        name: string
+        created-at: datetime
+        updated-at: datetime
+
+contacts:
+  endpoints:
+  - /contacts
+  - /contacts/:id
+  - /organizations/:id/relationships/contacts
+  - /organizations/:id/relationships/contacts/:id
+  methods:
+  - DELETE
+  - GET
+  - PATCH
+  - POST
+  allowed_parameters:
+  - filter[contact_type_id]
+  - filter[first_name]
+  - filter[id]
+  - filter[important]
+  - filter[last_name]
+  - filter[organization_id]
+  - filter[primary_email]
+  - filter[psa_id]
+  - filter[psa_integration_type]
+  - filter[title]
+  - sort
+  - page[number]
+  - page[size]
+  - include
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        id: int
+        organization-id: int
+        contact-type-id: int
+        location-id: int
+        first-name: string
+        last-name: string
+        title: string
+        important: string
+        notes: string
+        restricted: bool
+        contact-emails:
+        - value: string
+          primary: bools
+          label-name: string
+        contact-phones:
+        - value: int
+          extension: string
+          primary: bool
+          label-name: string
+          label-type: string
+      relationships:
+        attachments:
+          data:
+          - id: int
+            type: string
+  returnbody:
+    data:
+    - id: int
+      type: string
+      attributes:
+        organization-id: int
+        organization-name: string
+        resource-url: string
+        psa-integration: string
+        name: string
+        first-name: string
+        last-name: string
+        title: string
+        contact-type-id: int
+        contact-type-name: string
+        location-id: int
+        location-name: string
+        important: string
+        notes: string
+        created-at: datetime
+        updated-at: datetime
+        contact-emails:
+        - value: string
+          primary: bool
+          label-name: string
+        contact-phones:
+        - value: string
+          extension: string
+          primary: bool
+          label-name: string
+          label-type: string
+          formatted-value: string
+      relationships:
+        attachments:
+          data:
+          - id: int
+            type: string
+    included:
+    - id: int
+      type: string
+      attributes:
+        id: int
+        name: string
+        attachment-file-name: string
+        attachment-content-type: string
+        attachment-file-size: int
+        ext: string
+        download-url: string
+        created-at: datetime
+        updated-at: datetime
+        
+contact_types:
+  endpoints:
+  - /contact_types
+  - /contact_types/:id
+  methods:
+  - GET
+  - PATCH
+  - POST
+  allowed_parameters:
+  - filter[name]
+  - sort
+  - page[number]
+  - page[size]
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        name: string
+  returnbody:
+    data:
+    - id: int
+      type: string
+      attributes:
+        name: string
+        created-at: datetime
+        updated-at: datetime
+
+locations:
+  endpoints:
+  - /locations
+  - /locations/:id
+  - /organizations/:id/relationships/locations
+  methods:
+  - DELETE
+  - GET
+  - PATCH
+  - POST
+  allowed_parameters:
+  - filter[city]
+  - filter[country_id]
+  - filter[id]
+  - filter[name]
+  - filter[organization_id]
+  - filter[psa_id]
+  - filter[psa_integration_type]
+  - filter[region_id]
+  - sort
+  - page[number]
+  - page[size]
+  - include
+  required_parameters:
+  createbody:
+    data:
+    - type: string
+      attributes:
+        id: int
+        organization-id: int
+        name: string
+        primary: bool
+        address-1: string
+        address-2: string
+        city: string
+        postal-code: string
+        region-id: int
+        country-id: int
+        phone: string
+        fax: string
+        notes: string
+        restricted: bool
+  returnbody:
+    data:
+    - id: int
+      type: string
+      attributes:
+        organization-id: int
+        organization-name: string
+        name: string
+        primary: bool
+        address-1: int
+        address-2: string
+        city: string
+        postal-code: int
+        region-id: int
+        region-name: string
+        country-id: int
+        country-name: string
+        phone: int
+        fax: int
+        notes: string
+        created-at: datetime
+        updated-at: datetime
+        formatted-phone: (415) 213-2000
+        formatted-fax: (415) 213-2004
