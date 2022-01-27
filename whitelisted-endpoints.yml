@@ -368,6 +368,16 @@ flexible_assets:
           members-table: string
           parent-groups: [int]
           parent-groups-table: string
+          ### Email Groups
+          email-address: string
+          o365-group-type: string
+          user-additions: string
+          ad-access-group: [int]
+          objectid: string
+          configuration-details: string
+          owners: [int]
+          member-mailboxes: [int]
+          owners-table: string
           ### File Shares
           share-name: string
           share-type: string
@@ -528,6 +538,25 @@ flexible_assets:
             values:
             - id: int
           parent-groups-table: string
+          ### Email Groups
+          email-address: string
+          o365-group-type: string
+          user-additions: string
+          ad-access-group:
+            type: string
+            values:
+            - id: int
+          objectid: string
+          configuration-details: string
+          owners:
+            type: string
+            values:
+            - id: int
+          member-mailboxes:
+            type: string
+            values:
+            - id: int
+          owners-table: string
           ### File Shares
           share-name: string
           share-type: string
