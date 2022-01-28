@@ -374,7 +374,9 @@ flexible_assets:
           user-additions: string
           ad-access-group: [int]
           objectid: string
+          created-on: datetime
           configuration-details: string
+          email-addresses: string
           owners: [int]
           member-mailboxes: [int]
           owners-table: string
@@ -547,7 +549,9 @@ flexible_assets:
             values:
             - id: int
           objectid: string
+          created-on: datetime
           configuration-details: string
+          email-addresses: string
           owners:
             type: string
             values:
