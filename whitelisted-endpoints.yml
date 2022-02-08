@@ -425,6 +425,43 @@ flexible_assets:
           assigned-user-s: [int]
           # Custom Overview
           overview: string
+          # Scripts - Last Run
+          current-version: string
+          contact-audit: datetime
+          contact-audit-monitoring-disabled: bool
+          user-usage: datetime
+          user-usage-monitoring-disabled: bool
+          billing-update-ua: datetime
+          billing-update-ua-monitoring-disabled: bool
+          o365-license-report: datetime
+          o365-license-report-monitoring-disabled: bool
+          device-cleanup: datetime
+          device-cleanup-monitoring-disabled: bool
+          billing-update-da: datetime
+          billing-update-da-monitoring-disabled: bool
+          device-locations: datetime
+          device-locations-monitoring-disabled: bool
+          monthly-stats-rollup: datetime
+          monthly-stats-rollup-monitoring-disabled: bool
+          contact-cleanup: datetime
+          contact-cleanup-monitoring-disabled: bool
+          active-directory: datetime
+          active-directory-monitoring-disabled: bool
+          ad-groups: datetime
+          ad-groups-monitoring-disabled: bool
+          o365-groups: datetime
+          o365-groups-monitoring-disabled: bool
+          hyper-v: datetime
+          hyper-v-monitoring-disabled: bool
+          file-shares: datetime
+          file-shares-monitoring-disabled: bool
+          licensing-overview: datetime
+          licensing-overview-monitoring-disabled: bool
+          meraki-licensing: datetime
+          meraki-licensing-monitoring-disabled: bool
+          bluebeam-licensing: datetime
+          bluebeam-licensing-monitoring-disabled: bool
+          custom-scripts: string
 
   returnbody:
     errors: list
@@ -650,6 +687,43 @@ flexible_assets:
             - id: int
           # Custom Overview
           overview: string
+          # Scripts - Last Run
+          current-version: string
+          contact-audit: datetime
+          contact-audit-monitoring-disabled: bool
+          user-usage: datetime
+          user-usage-monitoring-disabled: bool
+          billing-update-ua: datetime
+          billing-update-ua-monitoring-disabled: bool
+          o365-license-report: datetime
+          o365-license-report-monitoring-disabled: bool
+          device-cleanup: datetime
+          device-cleanup-monitoring-disabled: bool
+          billing-update-da: datetime
+          billing-update-da-monitoring-disabled: bool
+          device-locations: datetime
+          device-locations-monitoring-disabled: bool
+          monthly-stats-rollup: datetime
+          monthly-stats-rollup-monitoring-disabled: bool
+          contact-cleanup: datetime
+          contact-cleanup-monitoring-disabled: bool
+          active-directory: datetime
+          active-directory-monitoring-disabled: bool
+          ad-groups: datetime
+          ad-groups-monitoring-disabled: bool
+          o365-groups: datetime
+          o365-groups-monitoring-disabled: bool
+          hyper-v: datetime
+          hyper-v-monitoring-disabled: bool
+          file-shares: datetime
+          file-shares-monitoring-disabled: bool
+          licensing-overview: datetime
+          licensing-overview-monitoring-disabled: bool
+          meraki-licensing: datetime
+          meraki-licensing-monitoring-disabled: bool
+          bluebeam-licensing: datetime
+          bluebeam-licensing-monitoring-disabled: bool
+          custom-scripts: string
           ###
         created-at: datetime
         updated-at: datetime
