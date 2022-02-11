@@ -429,8 +429,6 @@ flexible_assets:
           current-version: string
           contact-audit: datetime
           contact-audit-monitoring-disabled: bool
-          user-usage: datetime
-          user-usage-monitoring-disabled: bool
           billing-update-ua: datetime
           billing-update-ua-monitoring-disabled: bool
           o365-license-report: datetime
@@ -439,6 +437,8 @@ flexible_assets:
           device-cleanup-monitoring-disabled: bool
           billing-update-da: datetime
           billing-update-da-monitoring-disabled: bool
+          device-usage: datetime
+          device-usage-monitoring-disabled: bool
           device-locations: datetime
           device-locations-monitoring-disabled: bool
           monthly-stats-rollup: datetime
@@ -691,8 +691,6 @@ flexible_assets:
           current-version: string
           contact-audit: datetime
           contact-audit-monitoring-disabled: bool
-          user-usage: datetime
-          user-usage-monitoring-disabled: bool
           billing-update-ua: datetime
           billing-update-ua-monitoring-disabled: bool
           o365-license-report: datetime
@@ -701,6 +699,8 @@ flexible_assets:
           device-cleanup-monitoring-disabled: bool
           billing-update-da: datetime
           billing-update-da-monitoring-disabled: bool
+          device-usage: datetime
+          device-usage-monitoring-disabled: bool
           device-locations: datetime
           device-locations-monitoring-disabled: bool
           monthly-stats-rollup: datetime
