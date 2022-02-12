@@ -5,8 +5,8 @@ $ITGJsonDepth = 8
 
 Write-Information ("Incoming {0} {1}" -f $Request.Method,$Request.Url)
 
-Function ImmediateFailure ($Message) {
-    Write-Error $Message
+Function ImmediateFailure ($Message, $Company) {
+    Write-Error "Error: $($Message)  Company: $($Company)"
     Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
         headers    = @{'content-type' = 'application\json' }
         StatusCode = [httpstatuscode]::OK
@@ -82,7 +82,7 @@ $ApiKey = $ApiKeys | Where-Object { $_.Value -eq $clientToken }
 # Check if the client's API token matches our stored version and that it's not too short.
 # Without this check, a misconfigured environmental variable could allow unauthenticated access.
 if (!$ApiKey -or $ApiKey.Value.Length -lt 14 -or $clientToken -ne $ApiKey.Value) {
-    ImmediateFailure "401 - API token does not match"
+    ImmediateFailure -Message "401 - API token does not match" -Company $ApiKey
 }
 
 $DISABLE_ORGLIST_CSV = ($Env:DISABLE_ORGLIST_CSV -and (($Env:DISABLE_ORGLIST_CSV).ToLower() -eq 'true'))
@@ -98,7 +98,7 @@ If (-not $DISABLE_ORGLIST_CSV) {
     $OrgList = import-csv ($TriggerMetadata.FunctionDirectory + "\OrgList.csv") -delimiter ","
     $AllowedOrgs = $OrgList | where-object { $_.ip -eq $ClientIP -and ($_.APIKeyName -eq $ApiKeyOrg -or $_.APIKeyName -eq $ApiKey.Name) }
     if (!$AllowedOrgs) { 
-        ImmediateFailure "401 - No match found in allowed IPs list"
+        ImmediateFailure -Message "401 - No match found in allowed IPs list" -Company $ApiKeyOrg
     }
 
 }
@@ -129,7 +129,7 @@ foreach ($key in $endpoints.keys) {
     }
 }
 if (-not $endpointKey) {
-    ImmediateFailure "401 - Unauthorized endpoint or method"
+    ImmediateFailure -Message "401 - Unauthorized endpoint or method: $endpointKey" -Company $ApiKeyOrg
 }
 
 # Build new query string from required and whitelisted parameters
@@ -181,7 +181,7 @@ while ($attempt -gt 0 -and -not $SuccessfullQuery) {
             #ImmediateFailure "$($_.Exception.Response.StatusCode.value__) - Failed after 2 attempts to $itgUri." 
 
             # The below could have security implications, testing
-            ImmediateFailure "$($_.Exception.Response.StatusCode.value__) - Failed after 2 attempts to $itgUri. (Reason: $($ErrorDetails.errors.detail))" 
+            ImmediateFailure -Message "$($_.Exception.Response.StatusCode.value__) - Failed after 2 attempts to $itgUri. (Reason: $($ErrorDetails.errors.detail))" -Company $ApiKeyOrg
         }
         start-sleep (get-random -Minimum 1 -Maximum 10)
     }
