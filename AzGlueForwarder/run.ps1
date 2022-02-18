@@ -5,8 +5,12 @@ $ITGJsonDepth = 8
 
 Write-Information ("Incoming {0} {1}" -f $Request.Method,$Request.Url)
 
-Function ImmediateFailure ($Message, $Company) {
-    Write-Error "Error: $($Message)  Company: $($Company)"
+Function ImmediateFailure ($Message, $Company, $Details) {
+    $Err = "$($Message)  Company: $($Company)  Method: $($Request.Method)"
+    if ($Details) {
+        $Err += " \n Details: " + $Details
+    }
+    Write-Error $Err
     Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
         headers    = @{'content-type' = 'application\json' }
         StatusCode = [httpstatuscode]::OK
@@ -86,9 +90,18 @@ if (!$ApiKey -or $ApiKey.Value.Length -lt 14 -or $clientToken -ne $ApiKey.Value)
 }
 
 $DISABLE_ORGLIST_CSV = ($Env:DISABLE_ORGLIST_CSV -and (($Env:DISABLE_ORGLIST_CSV).ToLower() -eq 'true'))
+
+if ($Request.Body.PermissionsCheckOnly) {
+    Write-Verbose "Running permissions only check"
+}
+
 If (-not $DISABLE_ORGLIST_CSV) {
     # Get the client's IP address
-    $ClientIP = ($request.headers.'X-Forwarded-For' -split ':')[0]
+    if ($Request.Body.PermissionsCheckOnly) {
+        $ClientIP = $request.headers.'Originating-IP'
+    } else {
+        $ClientIP = ($request.headers.'X-Forwarded-For' -split ':')[0]
+    }
     if (-not $ClientIP -and $request.url.StartsWith("http://localhost:")) {
         $ClientIP = "localtesting"
     }
@@ -96,11 +109,19 @@ If (-not $DISABLE_ORGLIST_CSV) {
     $ApiKeyOrg = ($ApiKey.Name -split '_')[1]
     # Check the client's IP against the IP/org whitelist.
     $OrgList = import-csv ($TriggerMetadata.FunctionDirectory + "\OrgList.csv") -delimiter ","
-    $AllowedOrgs = $OrgList | where-object { $_.ip -eq $ClientIP -and ($_.APIKeyName -eq $ApiKeyOrg -or $_.APIKeyName -eq $ApiKey.Name) }
+    $AllowedOrgs = $OrgList | where-object { ($_.ip -eq $ClientIP -or $_.ip -eq "*") -and ($_.APIKeyName -eq $ApiKeyOrg -or $_.APIKeyName -eq $ApiKey.Name) }
     if (!$AllowedOrgs) { 
-        ImmediateFailure -Message "401 - No match found in allowed IPs list" -Company $ApiKeyOrg
+        ImmediateFailure -Message "401 - No match found in allowed IPs list" -Company $ApiKeyOrg -Details $ClientIP
     }
 
+}
+
+if ($Request.Body.PermissionsCheckOnly) {
+    Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
+        StatusCode = [System.Net.HttpStatusCode]::OK
+        Body = "success"
+    })
+    exit
 }
 
 ## Whitelisting endpoints & data.
@@ -129,7 +150,7 @@ foreach ($key in $endpoints.keys) {
     }
 }
 if (-not $endpointKey) {
-    ImmediateFailure -Message "401 - Unauthorized endpoint or method: $endpointKey" -Company $ApiKeyOrg
+    ImmediateFailure -Message "401 - Unauthorized endpoint or method: $endpointKey" -Company $ApiKeyOrg -Details ($Request.Body|ConvertTo-Json -depth $ITGJsonDepth)
 }
 
 # Build new query string from required and whitelisted parameters
@@ -181,7 +202,7 @@ while ($attempt -gt 0 -and -not $SuccessfullQuery) {
             #ImmediateFailure "$($_.Exception.Response.StatusCode.value__) - Failed after 2 attempts to $itgUri." 
 
             # The below could have security implications, testing
-            ImmediateFailure -Message "$($_.Exception.Response.StatusCode.value__) - Failed after 2 attempts to $itgUri. (Reason: $($ErrorDetails.errors.detail))" -Company $ApiKeyOrg
+            ImmediateFailure -Message "$($_.Exception.Response.StatusCode.value__) - Failed after 2 attempts to $itgUri. (Reason: $($ErrorDetails.errors.detail))" -Company $ApiKeyOrg -Details $itgBodyJson
         }
         start-sleep (get-random -Minimum 1 -Maximum 10)
     }
@@ -194,7 +215,8 @@ if ($itgRequest.data.type -contains "organizations" -or
     $itgRequest.data = $itgRequest.data | Where-Object {
         ($DISABLE_ORGLIST_CSV) -or
         ($_.type -eq "organizations" -and $_.id -in $allowedOrgs.ITGlueOrgID) -or
-        ($_.attributes.'organization-id' -in $allowedOrgs.ITGlueOrgID)
+        ($_.attributes.'organization-id' -in $allowedOrgs.ITGlueOrgID) -or
+        $allowedOrgs.ITGlueOrgID -contains "*"
     }
 }
 
