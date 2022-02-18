@@ -462,6 +462,7 @@ flexible_assets:
           bluebeam-licensing: datetime
           bluebeam-licensing-monitoring-disabled: bool
           custom-scripts: string
+          devices-running-autodoc: string
 
   returnbody:
     errors: list
@@ -724,6 +725,7 @@ flexible_assets:
           bluebeam-licensing: datetime
           bluebeam-licensing-monitoring-disabled: bool
           custom-scripts: string
+          devices-running-autodoc: string
           ###
         created-at: datetime
         updated-at: datetime
