@@ -740,11 +740,18 @@ flexible_assets:
       attributes:
         id: int
         name: string
+        resource-id: int
+        resource-url: string
+        resource-type-name: string
+        asset-type: string
+        related-resource-attributes: string
         attachment-file-name: string
         attachment-content-type: string
         attachment-file-size: int
         ext: string
         download-url: string
+        notes: string
+        archived: bool
         created-at: datetime
         updated-at: datetime
 
@@ -987,11 +994,18 @@ contacts:
       attributes:
         id: int
         name: string
+        resource-id: int
+        resource-url: string
+        resource-type-name: string
+        asset-type: string
+        related-resource-attributes: string
         attachment-file-name: string
         attachment-content-type: string
         attachment-file-size: int
         ext: string
         download-url: string
+        notes: string
+        archived: bool
         created-at: datetime
         updated-at: datetime
         
