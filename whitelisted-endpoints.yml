@@ -111,11 +111,17 @@ passwords:
     - type: string
       id: int
       attributes:
-        username: string
-        name: string
         organization-id: int
+        name: string
+        username: string
         url: string
         notes: string
+        resource-id: int
+        resource-type: string
+        cached-resource-type-name: string
+        cached-resource-name: string
+        password-category-id: int
+        password-category-name: string
         created-at: datetime
         updated-at: datetime
         password-updated-at: datetime
@@ -192,7 +198,7 @@ configurations:
         hostname: string
         configuration-type-id: int
         configuration-status-id: int
-        location_id: int
+        location-id: int
         contact-id: int
         manufacturer-id: int
         model-id: int
@@ -217,6 +223,13 @@ configurations:
           data:
           - id: int
             type: string
+            attributes:
+              name: string
+              ip-address: string
+              mac-address: string
+              port: string
+              primary: bool
+              notes: string
   returnbody:
     data:
     - id: int
@@ -225,8 +238,22 @@ configurations:
         organization-id: int
         name: string
         hostname: string
+        configuration-type-id: int
+        configuration-type-name: string
+        configuration-status-id: int
+        configuration-status-name: string
+        location-id: int
+        location-name: string
+        contact-id: int
+        contact-name: string
+        manufacturer-id: int
+        manufacturer-name: string
+        model-id: int
+        model-name: string
         serial-number: string
         asset-tag: string
+        position: string
+        warranty-expires-at: string
         notes: string
         archived: bool
       relationships:
@@ -234,6 +261,13 @@ configurations:
           data:
           - id: int
             type: string
+            attributes:
+              name: string
+              ip-address: string
+              mac-address: string
+              port: string
+              primary: bool
+              notes: string
           
 domains:
   endpoints:
@@ -312,13 +346,23 @@ flexible_assets:
           instance-settings: string
           databases: string
           tagged-devices: [int]
-          # Used for "Hyper-v AutoDoc v2"
+          ### "Hyper-v AutoDoc v2"
           host-name: string
+          at-a-glance: string
           host-device: [int]
           virtual-machines: string
           network-settings: string
           replication-settings: string
           host-settings: string
+          physical-host-configuration: string
+          ### Virtualizations 
+          virtualization-friendly-name: string
+          office-location: [int]
+          virtualization-technology: string
+          virtualization-hosts: [int]
+          hyper-v-host-details: [int]
+          virtual-machine-configurations: [int]
+          management-login: [int]
           ### Customer Billing
           billed-by: string
           number-of-billed-users: int
@@ -361,6 +405,7 @@ flexible_assets:
           who-to-add: string
           approver-for-access: [int]
           guid: string
+          ad-site: string
           group-details: string
           member-groups: [int]
           member-users: [int]
@@ -368,6 +413,45 @@ flexible_assets:
           members-table: string
           parent-groups: [int]
           parent-groups-table: string
+          ### Email
+          type : string
+          status: string
+          hosting-location: string
+          webmail-url: string
+          management-url: string
+          distribution-list-manager-approver: [int]
+          azure-ad-connect: string
+          azure-ad-connect-server: [int]
+          azure-ad-connect-scope: string
+          azure-ad-connect-scope-ad-groups: [int]
+          azure-ad-connect-directory-sync-account: [int]
+          domain-s: [int]
+          default-domain: string
+          email-servers: [int]
+          azure-tenant-id: string
+          inbound-delivery: string
+          inbound-pop-imap-host: string
+          outbound-smtp-host: string
+          email-address-format: string
+          signature: string
+          mfa-enabled: string
+          azure-conditional-access-geo-filtering: string
+          azure-conditional-access-policy-details: string
+          anti-spam-technology: string
+          anti-spam-details: string
+          anti-spam-management-login: [int]
+          pst-export-location: string
+          export-location-file-store: [int]
+          backup-solution: [int]
+          creating-accounts: [int]
+          disabling-removing-accounts: [int]
+          creating-shared-mailboxes: [int]
+          creating-distribution-lists: [int]
+          computer-email-client-setup: [int]
+          mobile-phone-setup: [int]
+          spam-filter-management: [int]
+          outbound-smtp-setup: [int]
+          additional-details: string
           ### Email Groups
           email-address: string
           o365-group-type: string
@@ -375,6 +459,7 @@ flexible_assets:
           ad-access-group: [int]
           objectid: string
           created-on: datetime
+          o365-tenant-domain: string
           configuration-details: string
           email-addresses: string
           owners: [int]
@@ -402,6 +487,21 @@ flexible_assets:
           permissions-csv:
             content: base64file
             file_name: string
+          permissions-json:
+            content: base64file
+            file_name: string
+          ### Backups
+          backup-type: string
+          backup-solution-name: string
+          backup-description: string
+          backup-frequency: string
+          retention-period: string
+          protected-services: string
+          backup-location: string
+          offsite-service: string
+          offsite-provider: string
+          offsite-replication: string
+          offsite-retention-period: string
           ### Licenses
           name: string
           version: string
@@ -425,6 +525,10 @@ flexible_assets:
           assigned-user-s: [int]
           # Custom Overview
           overview: string
+          # End of Life
+          end-of-life: datetime
+          configuration-s: [int]
+          manufacturer-model: string
           # Scripts - Last Run
           current-version: string
           contact-audit: datetime
@@ -449,11 +553,16 @@ flexible_assets:
           active-directory-monitoring-disabled: bool
           ad-groups: datetime
           ad-groups-monitoring-disabled: bool
+          email: datetime
+          email-monitoring-disabled: bool
           o365-groups: datetime
           o365-groups-monitoring-disabled: bool
           hyper-v: datetime
           hyper-v-monitoring-disabled: bool
-          file-shares: datetime
+          security: datetime
+          security-monitoring-disabled: bool
+          file-shares-file-server: datetime
+          file-shares-ad-server: datetime
           file-shares-monitoring-disabled: bool
           licensing-overview: datetime
           licensing-overview-monitoring-disabled: bool
@@ -463,6 +572,19 @@ flexible_assets:
           bluebeam-licensing-monitoring-disabled: bool
           custom-scripts: string
           devices-running-autodoc: string
+          # Security
+          client-compliance-requirements: string
+          anti-virus: string
+          firewall-platform: string
+          inbound-rules: string
+          outbound-rules: string
+          site-to-site-vpn: string
+          minimum-length: int
+          min-max-password-age: string
+          lockout-threshold-duration: string
+          complexity-enabled: bool
+          other-restrictions: string
+          firewall-devices: [int]
 
   returnbody:
     errors: list
@@ -481,6 +603,35 @@ flexible_assets:
           device: int
           name: string
           host-name: string
+          at-a-glance: string
+          ### Virtualizations 
+          virtualization-friendly-name: string
+          office-location:
+            type: string
+            values:
+            - resource-url: string
+              id: int
+              name: string
+              address-1: string
+              city: string
+              organization-name: string
+          virtualization-technology: string
+          virtualization-hosts:
+            type: string
+            values:
+            - id: int
+          hyper-v-host-details:
+            type: string
+            values:
+            - id: int
+          virtual-machine-configurations:
+            type: string
+            values:
+            - id: int
+          management-login:
+            type: string
+            values:
+            - id: int
           ### Customer Billing
           billed-by: string
           number-of-billed-users: int
@@ -559,6 +710,7 @@ flexible_assets:
             values:
             - id: int
           guid: string
+          ad-site: string
           group-details: string
           member-groups:
             type: string
@@ -578,6 +730,101 @@ flexible_assets:
             values:
             - id: int
           parent-groups-table: string
+          ### Email
+          type : string
+          status: string
+          hosting-location: string
+          webmail-url: string
+          management-url: string
+          distribution-list-manager-approver:
+            type: string
+            values:
+            - id: int
+          azure-ad-connect: string
+          azure-ad-connect-server:
+            type: string
+            values:
+            - id: int
+              name: string
+          azure-ad-connect-scope: string
+          azure-ad-connect-scope-ad-groups:
+            type: string
+            values:
+            - id: int
+              name: string
+          azure-ad-connect-directory-sync-account:
+            type: string
+            values:
+            - id: int
+              name: string
+          domain-s:
+            type: string
+            values:
+            - id: int
+              name: string
+          default-domain: string
+          email-servers:
+            type: string
+            values:
+            - id: int
+          azure-tenant-id: string
+          inbound-delivery: string
+          inbound-pop-imap-host: string
+          outbound-smtp-host: string
+          email-address-format: string
+          signature: string
+          mfa-enabled: string
+          azure-conditional-access-geo-filtering: string
+          azure-conditional-access-policy-details: string
+          anti-spam-technology: string
+          anti-spam-details: string
+          anti-spam-management-login:
+            type: string
+            values:
+            - id: int
+          pst-export-location: string
+          export-location-file-store:
+            type: string
+            values:
+            - id: int
+          backup-solution:
+            type: string
+            values:
+            - id: int
+              name: string
+          creating-accounts:
+            type: string
+            values:
+            - id: int
+          disabling-removing-accounts:
+            type: string
+            values:
+            - id: int
+          creating-shared-mailboxes:
+            type: string
+            values:
+            - id: int
+          creating-distribution-lists:
+            type: string
+            values:
+            - id: int
+          computer-email-client-setup:
+            type: string
+            values:
+            - id: int
+          mobile-phone-setup:
+            type: string
+            values:
+            - id: int
+          spam-filter-management:
+            type: string
+            values:
+            - id: int
+          outbound-smtp-setup:
+            type: string
+            values:
+            - id: int
+          additional-details: string
           ### Email Groups
           email-address: string
           o365-group-type: string
@@ -588,6 +835,7 @@ flexible_assets:
             - id: int
           objectid: string
           created-on: datetime
+          o365-tenant-domain: string
           configuration-details: string
           email-addresses: string
           owners:
@@ -641,6 +889,23 @@ flexible_assets:
             name: string
             size: int
             url: string
+          permissions-json:
+            content-type: string
+            name: string
+            size: int
+            url: string
+          ### Backups
+          backup-type: string
+          backup-solution-name: string
+          backup-description: string
+          backup-frequency: string
+          retention-period: string
+          protected-services: string
+          backup-location: string
+          offsite-service: string
+          offsite-provider: string
+          offsite-replication: string
+          offsite-retention-period: string
           ### Applications
           manufacturer: string
           version: string
@@ -686,8 +951,31 @@ flexible_assets:
             type: string
             values:
             - id: int
+          # Firewalls
+          location:
+            type: string
+            values:
+            - id: int
+          configuration-item:
+            type: string
+            values:
+            - id: int
+          model: string
+          serial-number: string
+          sts-asset-tag: string
+          external-ip: string
+          internal-ip: string
+          dynamic-dns-hostname: string
+          cloud-managed: string
           # Custom Overview
           overview: string
+          # End of Life
+          end-of-life: datetime
+          configuration-s:
+            type: string
+            values:
+            - id: int
+          manufacturer-model: string
           # Scripts - Last Run
           current-version: string
           contact-audit: datetime
@@ -712,11 +1000,16 @@ flexible_assets:
           active-directory-monitoring-disabled: bool
           ad-groups: datetime
           ad-groups-monitoring-disabled: bool
+          email: datetime
+          email-monitoring-disabled: bool
           o365-groups: datetime
           o365-groups-monitoring-disabled: bool
           hyper-v: datetime
           hyper-v-monitoring-disabled: bool
-          file-shares: datetime
+          security: datetime
+          security-monitoring-disabled: bool
+          file-shares-file-server: datetime
+          file-shares-ad-server: datetime
           file-shares-monitoring-disabled: bool
           licensing-overview: datetime
           licensing-overview-monitoring-disabled: bool
@@ -726,7 +1019,24 @@ flexible_assets:
           bluebeam-licensing-monitoring-disabled: bool
           custom-scripts: string
           devices-running-autodoc: string
+          # Security
+          client-compliance-requirements: string
+          anti-virus: string
+          firewall-platform: string
+          inbound-rules: string
+          outbound-rules: string
+          site-to-site-vpn: string
+          minimum-length: int
+          min-max-password-age: string
+          lockout-threshold-duration: string
+          complexity-enabled: bool
+          other-restrictions: string
+          firewall-devices:
+            type: string
+            values:
+            - id: int
           ###
+        archived: bool
         created-at: datetime
         updated-at: datetime
       relationships:
