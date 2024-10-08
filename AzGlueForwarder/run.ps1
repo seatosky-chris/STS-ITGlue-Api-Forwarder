@@ -62,9 +62,9 @@ function Build-Body ($whitelistObj, $sourceObj, $depth) {
         }
     } elseif ($whitelistObj -is [System.Collections.Generic.List`1[System.Object]] -and $whitelistObj.count -eq 1) {
         # When the whitelist object is a list with a single member, loop over the source and store the results in an array.
-        $newObject = @()
+        $newObject = [System.Collections.Generic.List[PSObject]]::new()
         foreach ($item in $sourceObj) {
-            $newObject += Build-Body -whitelistObj $whitelistObj[0] -sourceObj $item -depth $depth
+            $newObject.Add((Build-Body -whitelistObj $whitelistObj[0] -sourceObj $item -depth $depth))
         }
     } elseif ($whitelistObj -is [string]) {
         # When the whitelist object is a string, store the value of the source object and move on.
@@ -125,7 +125,9 @@ if ($Request.Body.PermissionsCheckOnly) {
 }
 
 ## Whitelisting endpoints & data.
-Import-Module powershell-yaml -Function ConvertFrom-Yaml
+if (!(Get-Command 'ConvertFrom-Yaml' -errorAction SilentlyContinue)) {
+    Import-Module powershell-yaml -Function ConvertFrom-Yaml
+}
 $endpoints = Get-Content -Raw ($TriggerMetadata.FunctionDirectory + "\..\whitelisted-endpoints.yml") | ConvertFrom-Yaml -Ordered
 
 $resource_types = @('checklists', 'checklist_templates', 'configurations', 'contacts', 'documents', `
@@ -174,6 +176,7 @@ Write-Information ("Outgoing {0} {1}" -f $Request.Method,$itgUri)
 $itgHeaders = @{"x-api-key" = $ENV:ITGlueAPIKey}
 $itgMethod = $Request.Method
 if ($request.body) {
+    Write-Information ($request.body)
     $oldBody = $request.body | convertfrom-json
     $itgBody = Build-Body $endpoints[$endpointKey].createbody $oldBody
     $itgBodyJson = $itgBody | ConvertTo-Json -Depth $ITGJsonDepth
@@ -189,28 +192,28 @@ $SuccessfullQuery = $false
 $attempt = 2
 while ($attempt -gt 0 -and -not $SuccessfullQuery) {
     try {
-        $itgRequest = Invoke-RestMethod -Method $itgMethod -ContentType "application/vnd.api+json" `
+        $itgRequest = Invoke-RestMethod -Method $itgMethod -ContentType "application/vnd.api+json; charset=utf-8" `
                                         -Uri $itgUri -Body $itgBodyJson -Headers $itgHeaders -ErrorAction Stop -ErrorVariable $web_error
         $SuccessfullQuery = $true
     } catch {
         $attempt--
         if ($attempt -eq 0) {
             Write-Warning $_.Exception.Message
-            $ErrorDetails = $_.ErrorDetails.Message | ConvertFrom-Json
-            Write-Warning "Reason: $($ErrorDetails.errors.detail)"
+            #$ErrorDetails = $_.ErrorDetails.Message | ConvertFrom-Json
+            #Write-Warning "Reason: $($ErrorDetails.errors.detail)"
             # don't respond with $_.Exception.Message to avoid leaking any unexpected information.
             #ImmediateFailure "$($_.Exception.Response.StatusCode.value__) - Failed after 2 attempts to $itgUri." 
 
             # The below could have security implications, testing
-            ImmediateFailure -Message "$($_.Exception.Response.StatusCode.value__) - Failed after 2 attempts to $itgUri. (Reason: $($ErrorDetails.errors.detail))" -Company $ApiKeyOrg -Details $itgBodyJson
+            ImmediateFailure -Message "$($_.Exception.Response.StatusCode.value__) - Failed after 2 attempts to $itgUri. (Reason: $($ErrorDetails.errors.detail -join ", "))" -Company $ApiKeyOrg -Details $itgBodyJson
         }
         start-sleep (get-random -Minimum 1 -Maximum 10)
     }
 }
 
 # For organization specific data, only return records linked to the authorized client.
-if ($itgRequest.data.type -contains "organizations" -or 
-    $itgRequest.data[0].attributes.'organization-id') {
+if ($itgRequest -and $itgRequest.data -and ($itgRequest.data.type -contains "organizations" -or 
+    $itgRequest.data[0].attributes.'organization-id')) {
 
     $itgRequest.data = $itgRequest.data | Where-Object {
         ($DISABLE_ORGLIST_CSV) -or
@@ -240,7 +243,7 @@ Write-Verbose ("Response body: {0}" -f ($itgReturnBody | Convertto-Json -Depth $
 
 # Return the final object.
 Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
-    headers    = @{'content-type' = 'application\json' }
+    headers    = @{'content-type' = 'application\json; charset=utf-8' }
     StatusCode = [System.Net.HttpStatusCode]::OK
     Body       = ($itgReturnBody | ConvertTo-Json -Depth $ITGJsonDepth)
 })
