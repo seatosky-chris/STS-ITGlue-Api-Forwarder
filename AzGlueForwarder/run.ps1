@@ -2,6 +2,7 @@ using namespace System.Net
 param($Request, $TriggerMetadata)
 
 $ITGJsonDepth = 8
+# $VerbosePreference = "Continue"
 
 Write-Information ("Incoming {0} {1}" -f $Request.Method,$Request.Url)
 
@@ -39,7 +40,13 @@ function Build-Body {
         
         foreach ($key in $whitelistObj.keys) {
             # Safely check if the property exists on the source payload
-            if ($null -ne $sourceObj.PSObject.Properties[$key]) {
+            $keyExists = if ($sourceObj -is [System.Collections.IDictionary]) {
+                $sourceObj.Contains($key)
+            } else {
+                $null -ne $sourceObj.PSObject.Properties[$key]
+            }
+
+            if ($keyExists) {
                 $counter++
                 
                 # If the value is truthy, recurse
@@ -110,7 +117,7 @@ if (!$ApiKey -or $ApiKey.Value.Length -lt 14 -or $clientToken -ne $ApiKey.Value)
 $DISABLE_ORGLIST_CSV = ($Env:DISABLE_ORGLIST_CSV -and (($Env:DISABLE_ORGLIST_CSV).ToLower() -eq 'true'))
 
 if ($Request.Body.PermissionsCheckOnly) {
-    Write-Verbose "Running permissions only check"
+    Write-Verbose "Running permissions only check" -Verbose
 }
 
 If (-not $DISABLE_ORGLIST_CSV) {
@@ -151,9 +158,6 @@ if ($Request.Body.PermissionsCheckOnly) {
 
 ## Whitelisting endpoints & data.
 if (-not $global:EndpointsCache) {
-    if (!(Get-Command 'ConvertFrom-Yaml' -errorAction SilentlyContinue)) {
-        Import-Module powershell-yaml -Function ConvertFrom-Yaml
-    }
     # Load and parse the YAML only once per worker instance
     $global:EndpointsCache = Get-Content -Raw ($TriggerMetadata.FunctionDirectory + "\..\whitelisted-endpoints.yml") | ConvertFrom-Yaml -Ordered
 }
@@ -171,7 +175,9 @@ foreach ($type in $resource_types) {
 }
 
 # Log the body of the request if the debug level is trace. 
-Write-Verbose ("Incoming Body: {0}" -f ($Request.Body|ConvertTo-Json -depth $ITGJsonDepth))
+if ($VerbosePreference -eq 'Continue' -and $Request.Body) {
+    Write-Verbose ("Incoming Body: {0}" -f ($Request.Body|ConvertTo-Json -depth $ITGJsonDepth)) -Verbose
+}
 
 # Check to see if the called API endpoint & method has been whitelisted.
 foreach ($key in $endpoints.keys) {
@@ -210,20 +216,29 @@ if ($request.body) {
     $oldBody = $request.body | convertfrom-json
     $itgBody = Build-Body $endpoints[$endpointKey].createbody $oldBody
     $itgBodyJson = $itgBody | ConvertTo-Json -Depth $ITGJsonDepth
+
+    # Free up memory
+    $oldBody = $null
+    $itgBody = $null
 } else {
     $itgBodyJson = $null
 }
 
 # Log outgoing body if the debug level is trace. 
-Write-Verbose "Outgoing body: $itgBodyJson"
+if ($itgBodyJson) {
+    Write-Verbose "Outgoing body: $itgBodyJson" -Verbose
+}
 
 # Send request to IT Glue
 $SuccessfullQuery = $false
 $attempt = 2
 while ($attempt -gt 0 -and -not $SuccessfullQuery) {
     try {
-        $itgRequest = Invoke-RestMethod -Method $itgMethod -ContentType "application/vnd.api+json; charset=utf-8" `
-                                        -Uri $itgUri -Body $itgBodyJson -Headers $itgHeaders -ErrorAction Stop -ErrorVariable $web_error
+        $itgResponse = Invoke-WebRequest -Method $itgMethod -ContentType "application/vnd.api+json; charset=utf-8" `
+                                 -Uri $itgUri -Body $itgBodyJson -Headers $itgHeaders -UseBasicParsing -ErrorAction Stop
+		$itgRequest = [String]::new($itgResponse.Content) | ConvertFrom-Json -AsHashtable -Depth ($ITGJsonDepth + 2)
+        $itgRequest.data = @($itgRequest.data)
+        $itgResponse = $null  # release the raw response string immediately to save memory
         $SuccessfullQuery = $true
     } catch {
         $attempt--
@@ -242,13 +257,13 @@ while ($attempt -gt 0 -and -not $SuccessfullQuery) {
 }
 
 # For organization specific data, only return records linked to the authorized client.
-if ($itgRequest -and $itgRequest.data -and ($itgRequest.data.type -contains "organizations" -or 
-    $itgRequest.data[0].attributes.'organization-id')) {
+if ($itgRequest -and $itgRequest.data -and $itgRequest.data[0] -and ($itgRequest.data.type -contains "organizations" -or 
+    $itgRequest.data[0]['attributes']['organization-id'])) {
 
     $itgRequest.data = $itgRequest.data | Where-Object {
         ($DISABLE_ORGLIST_CSV) -or
         ($_.type -eq "organizations" -and $_.id -in $allowedOrgs.ITGlueOrgID) -or
-        ($_.attributes.'organization-id' -in $allowedOrgs.ITGlueOrgID) -or
+        ($_.attributes['organization-id'] -in $allowedOrgs.ITGlueOrgID) -or
         $allowedOrgs.ITGlueOrgID -contains "*"
     }
 }
@@ -269,7 +284,9 @@ if ($endpoints[$endpointKey].returnbody) {
 $itgRequest = $null # free up memory from the original request object as much as possible before we do any more processing.
 
 # Log response body if the debug level is trace. 
-Write-Verbose ("Response body: {0}" -f ($itgReturnBody | Convertto-Json -Depth $ITGJsonDepth))
+if ($VerbosePreference -eq 'Continue' -and $itgReturnBody) {
+    Write-Verbose ("Response body: {0}" -f ($itgReturnBody | Convertto-Json -Depth $ITGJsonDepth)) -Verbose
+}
 
 # Return the final object.
 Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
