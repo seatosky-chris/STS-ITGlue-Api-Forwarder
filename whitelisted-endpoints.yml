@@ -525,6 +525,7 @@ flexible_assets:
           assigned-user-s: [int]
           # Custom Overview
           overview: string
+          security-concerns: string
           # End of Life
           end-of-life: datetime
           configuration-s: [int]
@@ -969,6 +970,7 @@ flexible_assets:
           cloud-managed: string
           # Custom Overview
           overview: string
+          security-concerns: string
           # End of Life
           end-of-life: datetime
           configuration-s:
@@ -1015,6 +1017,8 @@ flexible_assets:
           licensing-overview-monitoring-disabled: bool
           meraki-licensing: datetime
           meraki-licensing-monitoring-disabled: bool
+          sophos-firewalls: datetime
+          sophos-firewalls-monitoring-disabled: bool
           bluebeam-licensing: datetime
           bluebeam-licensing-monitoring-disabled: bool
           custom-scripts: string
