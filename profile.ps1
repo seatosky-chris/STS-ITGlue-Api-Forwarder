@@ -15,6 +15,23 @@ if ($env:MSI_SECRET -and (Get-Module -ListAvailable Az.Accounts)) {
     Connect-AzAccount -Identity
 }
 
+# Load the whitelist YAML
+$yamlPath = Join-Path $PSScriptRoot "whitelisted-endpoints.yml"
+if (Test-Path $yamlPath) {
+    if (-not (Get-Command 'ConvertFrom-Yaml' -errorAction SilentlyContinue)) {
+        Import-Module powershell-yaml -Function ConvertFrom-Yaml
+    }
+    Write-Host "Loading and parsing whitelisted-endpoints.yml into global cache variable for this worker instance..." -ForegroundColor Green
+    $global:EndpointsCache = Get-Content -Raw $yamlPath | ConvertFrom-Yaml -Ordered
+}
+
+# Load the OrgList csv
+$csvPath = Join-Path $PSScriptRoot "AzGlueForwarder\OrgList.csv"
+if (Test-Path $csvPath) {
+    Write-Host "Loading OrgList.csv into global cache variable for this worker instance..." -ForegroundColor Green
+    $global:OrgListCache = Import-Csv $csvPath -Delimiter ","
+}
+
 # Uncomment the next line to enable legacy AzureRm alias in Azure PowerShell.
 # Enable-AzureRmAlias
 

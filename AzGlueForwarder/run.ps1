@@ -19,63 +19,80 @@ Function ImmediateFailure ($Message, $Company, $Details) {
     exit 1
 }
 
-function Build-Body ($whitelistObj, $sourceObj, $depth) {
-    # store a depth counter to avoid looping.
-    if ($depth -isnot [int]) {
-        $depth = 1
-    } else {
-        $depth++
-    }
-    if ($depth -gt ($ITGJsonDepth+2)) {
+function Build-Body {
+ param($whitelistObj, $sourceObj, $depth = 1)
+    # Safety Checks
+    if ($depth -gt ($ITGJsonDepth + 2)) {
         Write-Error "Possible recursion loop or source object is deeper than expected."
         Return
     } 
     if (-not $sourceObj) {
         Return
     }
+
+    # 1. Dictionary / Hashtable mapping
     if ($whitelistObj -is [hashtable] -or $whitelistObj -is [System.Collections.Specialized.OrderedDictionary]) {
         # When the whitelist object is a dictionary, loop over the keys and if they exist in the 
         # source object, recurse. Note that any extra keys will not be checked or logged.
         $counter = 0
-        $newObject = [pscustomObject]@{}
+        $newObjectHash = [ordered]@{}
+        
         foreach ($key in $whitelistObj.keys) {
-            if (Get-Member -inputobject $sourceObj -name $key -Membertype Properties) {
+            # Safely check if the property exists on the source payload
+            if ($null -ne $sourceObj.PSObject.Properties[$key]) {
                 $counter++
-                $defaultValue = $null
-				if ($whitelistObj[$key] -eq "bool") {
-					$defaultValue = $false
-				}
-				$newObject | Add-Member -NotePropertyName $key -NotePropertyValue $defaultValue
+                
+                # If the value is truthy, recurse
                 if ($sourceObj.$key) {
-					if ($sourceObj.$key -is [array]) {
-						# forces existing arrays to stay as arrays. Without this, arrays with 1 item get reduced to just that item (not in an array).
-                        $newObject.$key = @(Build-Body -whitelistObj $whitelistObj[$key] -sourceObj $sourceObj.$key -depth $depth)
-					} else {
-						$newObject.$key = Build-Body -whitelistObj $whitelistObj[$key] -sourceObj $sourceObj.$key -depth $depth
-					}
-				} elseif (-not $sourceObj.$key) {
-					$newObject.$key = $sourceObj.$key # to keep falsy values
-				}
+                    if ($sourceObj.$key -is [array]) {
+                        # forces existing arrays to stay as arrays. Without this, arrays with 1 item get reduced to just that item (not in an array).
+                        $newObjectHash[$key] = @(Build-Body -whitelistObj $whitelistObj[$key] -sourceObj $sourceObj.$key -depth ($depth + 1))
+                    } else {
+                        $newObjectHash[$key] = Build-Body -whitelistObj $whitelistObj[$key] -sourceObj $sourceObj.$key -depth ($depth + 1)
+                    }
+                } 
+                # If the value is falsy (null, false, 0), keep it as is
+                elseif (-not $sourceObj.$key) {
+                    $newObjectHash[$key] = $sourceObj.$key 
+                }
             }
-            $sourceSize = (Get-Member -inputobject $sourceObj -MemberType Properties).Name.length
-            Write-Debug ("{0}/{1} keys were whitelisted from the source dictionary." -f $counter, $sourceSize)
         }
-    } elseif ($whitelistObj -is [System.Collections.Generic.List`1[System.Object]] -and $whitelistObj.count -eq 1) {
+        $sourceSize = if ($sourceObj.PSObject.Properties) { $sourceObj.PSObject.Properties.Count } else { 0 }
+        Write-Debug ("{0}/{1} keys were whitelisted from the source dictionary." -f $counter, $sourceSize)
+        
+        return $newObjectHash
+    } 
+    
+    # 2. Array mapping (YAML schema list)
+    elseif ($whitelistObj -is [System.Collections.Generic.List`1[System.Object]] -and $whitelistObj.count -eq 1) {
         # When the whitelist object is a list with a single member, loop over the source and store the results in an array.
-        $newObject = [System.Collections.Generic.List[PSObject]]::new()
-        foreach ($item in $sourceObj) {
-            $newObject.Add((Build-Body -whitelistObj $whitelistObj[0] -sourceObj $item -depth $depth))
+        $results = [System.Collections.Generic.List[object]]::new()
+        
+        # Ensure the source is actually enumerable before looping
+        if ($sourceObj -is [System.Collections.IEnumerable] -and $sourceObj -isnot [string] -and $sourceObj -isnot [hashtable]) {
+            foreach ($item in $sourceObj) {
+                $results.Add((Build-Body -whitelistObj $whitelistObj[0] -sourceObj $item -depth ($depth + 1)))
+            }
+        } else {
+            # Fallback if the source is a single item but the schema expects a list
+            $results.Add((Build-Body -whitelistObj $whitelistObj[0] -sourceObj $sourceObj -depth ($depth + 1)))
         }
-    } elseif ($whitelistObj -is [string]) {
+        return $results.ToArray()
+    } 
+    
+    # 3. String (Leaf node)
+    elseif ($whitelistObj -is [string]) {
         # When the whitelist object is a string, store the value of the source object and move on.
         # Note that if the value is a list/dict, it will still add everything.
         # TODO: Validate source object data types.
-        $newObject = $sourceObj
-    } else {
+        return $sourceObj
+    } 
+    
+    # 4. Catch unexpected schemas
+    else {
         Write-Error "Unexpected format of whitelist object. Check your configuration: $($whitelistObj | ConvertTo-Json -Depth 2)"
         Return
     }
-    Return $newObject
 }
 $clientToken = $request.headers.'x-api-key'
 
@@ -86,6 +103,7 @@ $ApiKey = $ApiKeys | Where-Object { $_.Value -eq $clientToken }
 # Check if the client's API token matches our stored version and that it's not too short.
 # Without this check, a misconfigured environmental variable could allow unauthenticated access.
 if (!$ApiKey -or $ApiKey.Value.Length -lt 14 -or $clientToken -ne $ApiKey.Value) {
+    Write-Information "Originating IP: $($request.headers.'Originating-IP')"
     ImmediateFailure -Message "401 - API token does not match" -Company $ApiKey
 }
 
@@ -105,10 +123,17 @@ If (-not $DISABLE_ORGLIST_CSV) {
     if (-not $ClientIP -and $request.url.StartsWith("http://localhost:")) {
         $ClientIP = "localtesting"
     }
+
     # Get the organization associated with the API key
     $ApiKeyOrg = ($ApiKey.Name -split '_')[1]
+
+    # Cache the CSV payload
+    if (-not $global:OrgListCache) {
+        $global:OrgListCache = Import-Csv ($TriggerMetadata.FunctionDirectory + "\OrgList.csv") -Delimiter ","
+    }
+    $OrgList = $global:OrgListCache
+
     # Check the client's IP against the IP/org whitelist.
-    $OrgList = import-csv ($TriggerMetadata.FunctionDirectory + "\OrgList.csv") -delimiter ","
     $AllowedOrgs = $OrgList | where-object { ($_.ip -eq $ClientIP -or $_.ip -eq "*") -and ($_.APIKeyName -eq $ApiKeyOrg -or $_.APIKeyName -eq $ApiKey.Name) }
     if (!$AllowedOrgs) { 
         ImmediateFailure -Message "401 - No match found in allowed IPs list" -Company $ApiKeyOrg -Details $ClientIP
@@ -125,10 +150,15 @@ if ($Request.Body.PermissionsCheckOnly) {
 }
 
 ## Whitelisting endpoints & data.
-if (!(Get-Command 'ConvertFrom-Yaml' -errorAction SilentlyContinue)) {
-    Import-Module powershell-yaml -Function ConvertFrom-Yaml
+if (-not $global:EndpointsCache) {
+    if (!(Get-Command 'ConvertFrom-Yaml' -errorAction SilentlyContinue)) {
+        Import-Module powershell-yaml -Function ConvertFrom-Yaml
+    }
+    # Load and parse the YAML only once per worker instance
+    $global:EndpointsCache = Get-Content -Raw ($TriggerMetadata.FunctionDirectory + "\..\whitelisted-endpoints.yml") | ConvertFrom-Yaml -Ordered
 }
-$endpoints = Get-Content -Raw ($TriggerMetadata.FunctionDirectory + "\..\whitelisted-endpoints.yml") | ConvertFrom-Yaml -Ordered
+
+$endpoints = $global:EndpointsCache
 
 $resource_types = @('checklists', 'checklist_templates', 'configurations', 'contacts', 'documents', `
                     'domains', 'locations', 'passwords', 'ssl_certificates', 'flexible_assets', 'tickets')
@@ -227,16 +257,16 @@ if ($itgRequest -and $itgRequest.data -and ($itgRequest.data.type -contains "org
 if ($endpoints[$endpointKey].returnbody) {
     $itgReturnBody = Build-Body $endpoints[$endpointKey].returnbody $itgRequest
     if ($itgRequest.meta) {
-        $itgReturnBody | Add-Member -NotePropertyName 'meta' -NotePropertyValue $null
-        $itgReturnBody.meta = $itgRequest.meta
+        $itgReturnBody['meta'] = $itgRequest.meta
     }
     if ($itgRequest.links) {
-        $itgReturnBody | Add-Member -NotePropertyName 'links' -NotePropertyValue $null
-        $itgReturnBody.links = $itgRequest.links
+        $itgReturnBody['links'] = $itgRequest.links
     }
 } else {
     $itgReturnBody = @{}
 }
+
+$itgRequest = $null # free up memory from the original request object as much as possible before we do any more processing.
 
 # Log response body if the debug level is trace. 
 Write-Verbose ("Response body: {0}" -f ($itgReturnBody | Convertto-Json -Depth $ITGJsonDepth))
@@ -247,3 +277,5 @@ Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
     StatusCode = [System.Net.HttpStatusCode]::OK
     Body       = ($itgReturnBody | ConvertTo-Json -Depth $ITGJsonDepth)
 })
+
+$itgReturnBody = $null # free up memory from the response body as much as possible before exiting.
