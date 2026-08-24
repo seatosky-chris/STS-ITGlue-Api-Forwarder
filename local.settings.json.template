@@ -1,12 +1,15 @@
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsStorage": "",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
     "FUNCTIONS_WORKER_RUNTIME_VERSION": "7.4",
     "FUNCTIONS_WORKER_RUNTIME": "powershell",
     
     "ITGlueAPIKey": "<IT Glue API key>",
     "ITGlueURI": "https://api.itglue.com",
+
+    "APIKey_LastUpdatedAssetUpdater": "",
 
     "APIKey_ORG": "<Key for client machines to authenticate against this gateway>"
   }
