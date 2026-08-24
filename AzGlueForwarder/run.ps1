@@ -159,7 +159,11 @@ if ($Request.Body.PermissionsCheckOnly) {
 ## Whitelisting endpoints & data.
 if (-not $global:EndpointsCache) {
     # Load and parse the YAML only once per worker instance
+    if (-not (Get-Command 'ConvertFrom-Yaml' -errorAction SilentlyContinue)) {
+        Import-Module powershell-yaml -Function ConvertFrom-Yaml
+    }
     $global:EndpointsCache = Get-Content -Raw ($TriggerMetadata.FunctionDirectory + "\..\whitelisted-endpoints.yml") | ConvertFrom-Yaml -Ordered
+    Remove-Module powershell-yaml -ErrorAction SilentlyContinue
 }
 
 $endpoints = $global:EndpointsCache
