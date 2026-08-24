@@ -67,6 +67,7 @@ This version has been modified by Chris Jantzen. Per-Organization API Key's have
     2. Add APIKey_ORG (or your per organization keys), ITGlueAPIKey & ITGlueURI environmental variables here.
     3. If you've got a Key Vault, you can authorize the system managed identity and provide access to the key through the Application settings [using this process](https://docs.microsoft.com/en-us/azure/app-service/app-service-key-vault-references)
 12. Finally, to get your function token, navigate to Functions > App Keys. Copy the "default" key. You will need to use this in the BaseUri (see Basic Usage section below).
+13. I also recommend going into the Azure Functions configuration and changing it to 64-bit if possible to increase the available memory.
 
 ### Basic usage:
 Once the gateway is deployed to Azure Functions, you can use the standard IT Glue Powershell module to query it.
