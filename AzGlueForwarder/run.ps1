@@ -260,11 +260,13 @@ while ($attempt -gt 0 -and -not $SuccessfullQuery) {
 if ($itgRequest -and $itgRequest.data -and $itgRequest.data[0] -and ($itgRequest.data.type -contains "organizations" -or 
     $itgRequest.data[0]['attributes']['organization-id'])) {
 
+    $orgIdSet = [System.Collections.Generic.HashSet[string]]($allowedOrgs.ITGlueOrgID)
+    $allowAll = $orgIdSet.Contains("*")
+
     $itgRequest.data = $itgRequest.data | Where-Object {
-        ($DISABLE_ORGLIST_CSV) -or
-        ($_.type -eq "organizations" -and $_.id -in $allowedOrgs.ITGlueOrgID) -or
-        ($_.attributes['organization-id'] -in $allowedOrgs.ITGlueOrgID) -or
-        $allowedOrgs.ITGlueOrgID -contains "*"
+        $DISABLE_ORGLIST_CSV -or $allowAll -or 
+        ($_.type -eq "organizations" -and $orgIdSet.Contains([string]$_.id)) -or
+        $orgIdSet.Contains([string]$_.attributes.'organization-id')
     }
 }
 
