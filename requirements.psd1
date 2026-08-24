@@ -2,6 +2,5 @@
 # See https://aka.ms/functionsmanageddependency for additional information.
 #
 @{
-    'Az' = '4.*'
     'powershell-yaml' = '0.4.12'
 }
