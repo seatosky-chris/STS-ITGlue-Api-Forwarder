@@ -11,9 +11,6 @@
 
 # Authenticate with Azure PowerShell using MSI.
 # Remove this if you are not planning on using MSI or Azure PowerShell.
-if ($env:MSI_SECRET -and (Get-Module -ListAvailable Az.Accounts)) {
-    Connect-AzAccount -Identity
-}
 
 # Load the whitelist YAML
 $yamlPath = Join-Path $PSScriptRoot "whitelisted-endpoints.yml"
@@ -23,6 +20,7 @@ if (Test-Path $yamlPath) {
     }
     Write-Host "Loading and parsing whitelisted-endpoints.yml into global cache variable for this worker instance..." -ForegroundColor Green
     $global:EndpointsCache = Get-Content -Raw $yamlPath | ConvertFrom-Yaml -Ordered
+    Remove-Module powershell-yaml -ErrorAction SilentlyContinue
 }
 
 # Load the OrgList csv
